@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field %}
+{% block heading %}{{ _('nav_admins') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ _('nav_admins') }}</h1><span class="muted">{{ _('admins_intro') }}</span></div>
+<section class="card"><h2>{{ _('admin_add') }}</h2>
+ <form method="post" action="/admins/create" class="form-row">{{ csrf_field(csrf) }}
+  <div><label for="a-u">{{ _('username') }}</label><input id="a-u" name="username" required minlength="3" maxlength="64" autocomplete="off" style="width:100%"></div>
+  <div><label for="a-p">{{ _('password') }}</label><input id="a-p" name="password" type="password" required minlength="10" autocomplete="new-password" style="width:100%"><div class="help">{{ _('password_rule') }}</div></div>
+  <div><label for="a-r">{{ _('col_role') }}</label><select id="a-r" name="role" style="width:100%">{% for r in roles %}<option value="{{ r }}" {% if r == 'admin' %}selected{% endif %}>{{ _('role_' ~ r) }}</option>{% endfor %}</select></div>
+  <div style="align-self:end"><button class="btn primary">{{ _('admin_add') }}</button></div>
+ </form></section>
+<div class="table-wrap" style="margin-top:1rem"><table>
+ <thead><tr><th>{{ _('username') }}</th><th>{{ _('col_created') }}</th><th>{{ _('col_last_login') }}</th><th colspan="2">{{ _('admin_edit') }}</th></tr></thead><tbody>
+ {% for a in admins %}<tr><td><strong>{{ a.username }}</strong> {% if a.id == admin.id %}<span class="badge b-acc">{{ _('you') }}</span>{% endif %}</td>
+  <td class="nw small"><time class="ts" datetime="{{ a.created_at | iso }}"></time></td>
+  <td class="nw small">{% if a.last_login_at %}<time class="ts" datetime="{{ a.last_login_at | iso }}"></time>{% else %}—{% endif %}</td>
+  <td colspan="2"><form method="post" action="/admins/{{ a.id }}/update" class="inline-form" style="flex-wrap:wrap">{{ csrf_field(csrf) }}
+   <select name="role" aria-label="{{ _('col_role') }}">{% for r in roles %}<option value="{{ r }}" {% if r == a.role %}selected{% endif %}>{{ _('role_' ~ r) }}</option>{% endfor %}</select>
+   <label style="display:inline-flex;gap:.3rem;align-items:center;margin:0"><input type="checkbox" name="active" value="1" {% if a.is_active %}checked{% endif %}>{{ _('src_enabled') }}</label>
+   <input name="password" type="password" minlength="10" placeholder="{{ _('new_password_optional') }}" autocomplete="new-password" style="width:11rem">
+   <button class="btn sm">{{ _('save') }}</button></form></td></tr>{% endfor %}
+</tbody></table></div>
+<h2 style="margin-top:1.5rem">{{ _('audit_log') }}</h2>
+<div class="table-wrap" style="max-height:28rem;overflow:auto"><table><thead><tr><th>{{ _('col_time') }}</th><th>{{ _('username') }}</th><th>{{ _('col_action') }}</th><th>{{ _('col_target') }}</th><th>IP</th></tr></thead><tbody>
+{% for l in logs %}<tr><td class="nw small"><time class="ts" datetime="{{ l.created_at | iso }}"></time></td><td>{{ l.admin_username or '—' }}</td><td><span class="badge b-mute">{{ l.action }}</span></td><td class="small mono">{{ l.target or '' }}{% if l.detail %}<div class="muted">{{ l.detail[:140] }}</div>{% endif %}</td><td class="mono small">{{ l.ip }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

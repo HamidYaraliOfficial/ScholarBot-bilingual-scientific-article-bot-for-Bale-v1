@@ -1,0 +1,7 @@
+{% from "_macros.html" import status_badge %}
+<h2>{{ u.first_name or '' }} {% if u.username %}<span class="mono">@{{ u.username }}</span>{% endif %}</h2>
+<p class="muted">Bale ID <span class="mono">{{ u.bale_id }}</span> · {{ _('col_joined') }}: <time class="ts" datetime="{{ u.created_at | iso }}"></time></p>
+<h3>{{ _('search_history') }}</h3>
+<div class="table-wrap" style="max-height:22rem;overflow:auto"><table><thead><tr><th>{{ _('col_time') }}</th><th>{{ _('col_type') }}</th><th>{{ _('flt_query') }}</th><th>{{ _('col_status') }}</th></tr></thead><tbody>
+{% for j in jobs %}<tr><td class="nw small"><time class="ts" datetime="{{ j.created_at | iso }}"></time></td><td><span class="badge b-mute">{{ j.query_type }}</span></td><td class="small"><span class="clip">{{ j.query_text }}</span></td><td>{{ status_badge(j.status, _) }}</td></tr>{% else %}<tr><td colspan="4" class="muted">—</td></tr>{% endfor %}
+</tbody></table></div>

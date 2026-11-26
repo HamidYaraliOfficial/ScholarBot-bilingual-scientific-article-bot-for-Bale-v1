@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="{{ lang }}" dir="{{ dir }}" data-theme="{{ theme }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ _('login') }} · ScholarBot</title><link rel="stylesheet" href="/static/app.css"></head>
+<body><main class="login"><div class="card">
+ <div class="brand"><span class="brand-mark">S</span><span>ScholarBot</span></div>
+ <h1 style="margin-bottom:.3rem">{{ _('login') }}</h1>
+ <p class="muted" style="margin-top:0">{{ _('login_hint') }}</p>
+ {% if error %}<p class="err-text" role="alert">{{ error }}</p>{% endif %}
+ <form method="post" action="/login" class="grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf }}">
+  <div><label for="u">{{ _('username') }}</label><input id="u" name="username" autocomplete="username" required autofocus style="width:100%"></div>
+  <div><label for="p">{{ _('password') }}</label><input id="p" name="password" type="password" autocomplete="current-password" required style="width:100%"></div>
+  <button class="btn primary" style="justify-content:center">{{ _('login') }}</button>
+ </form>
+ <form method="post" action="/prefs" class="inline-form" style="margin-top:1rem"><input type="hidden" name="csrf_token" value="{{ csrf }}">
+  {% for l in languages %}<button class="btn sm" name="lang" value="{{ l }}">{{ {'fa':'فارسی','en':'English'}.get(l, l) }}</button>{% endfor %}</form>
+</div></main></body></html>

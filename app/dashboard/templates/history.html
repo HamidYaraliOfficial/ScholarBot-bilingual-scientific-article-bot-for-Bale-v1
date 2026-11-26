@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block heading %}{{ _('nav_history') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ _('nav_history') }}</h1><span class="muted">{{ _('history_intro') }}</span></div>
+<form class="card filters" method="get" action="/history">
+ <div><label for="h-q">{{ _('flt_query') }}</label><input id="h-q" name="q" value="{{ q }}" style="width:100%"></div>
+ <div><label for="h-s">{{ _('col_status') }}</label><select id="h-s" name="status" style="width:100%"><option value="">—</option>{% for s in statuses %}<option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ _('status_' ~ s) }}</option>{% endfor %}</select></div>
+ <div><button class="btn primary">{{ _('filter') }}</button></div>
+</form>
+{% include "_history_table.html" %}
+{% endblock %}
+{% block dialogs %}<dialog id="detail-dialog"><div id="detail-body"></div><div class="toolbar" style="justify-content:flex-end"><button class="btn" id="detail-close">{{ _('close') }}</button></div></dialog>{% endblock %}

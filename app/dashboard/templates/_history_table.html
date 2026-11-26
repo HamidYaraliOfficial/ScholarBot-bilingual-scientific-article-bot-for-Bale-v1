@@ -1,0 +1,18 @@
+{% from "_macros.html" import status_badge, pager %}
+<div id="history-wrap" hx-get="/history?{{ qs(page=page) }}&partial=1" hx-trigger="every 6s" hx-swap="outerHTML">
+ <div class="table-wrap"><table>
+  <thead><tr><th>{{ _('col_time') }}</th><th>{{ _('col_user') }}</th><th>{{ _('col_type') }}</th><th>{{ _('flt_query') }}</th><th>{{ _('col_status') }}</th><th>{{ _('nav_articles') }}</th><th>{{ _('col_source') }}</th><th>{{ _('col_error') }}</th><th>{{ _('col_duration') }}</th></tr></thead>
+  <tbody>
+  {% for j in jobs %}<tr>
+   <td class="nw small"><time class="ts" datetime="{{ j.created_at | iso }}"></time></td>
+   <td class="nw small">{% if j.user %}{{ ('@' ~ j.user.username) if j.user.username else j.user.bale_id }}{% else %}—{% endif %}</td>
+   <td class="nw"><span class="badge b-mute">{{ j.query_type }}</span></td>
+   <td class="title"><span class="clip">{{ j.query_text }}</span></td>
+   <td class="nw">{{ status_badge(j.status, _) }}</td>
+   <td class="small"><span class="clip">{% if j.article %}<a href="#" data-detail="{{ j.article.id }}" hx-get="/articles/{{ j.article.id }}" hx-target="#detail-body">{{ j.article.title or j.article.doi }}</a>{% endif %}</span></td>
+   <td class="nw">{{ j.source or '' }}</td><td class="small mono">{{ j.error_code or '' }}</td>
+   <td class="nw small">{% if j.started_at and j.finished_at %}{{ ((j.finished_at - j.started_at).total_seconds()) | round(1) }}s{% endif %}</td>
+  </tr>{% else %}<tr><td colspan="9" class="muted" style="text-align:center;padding:2rem">{{ _('empty_history') }}</td></tr>{% endfor %}
+  </tbody></table></div>
+ {% if pages > 1 %}<nav class="pager">{% if page > 1 %}<a class="btn sm" href="/history?{{ qs(page=page-1) }}">‹</a>{% endif %}<span class="muted">{{ page }} / {{ pages }}</span>{% if page < pages %}<a class="btn sm" href="/history?{{ qs(page=page+1) }}">›</a>{% endif %}</nav>{% endif %}
+</div>

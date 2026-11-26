@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block heading %}{{ _('nav_logs') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ _('nav_logs') }}</h1><span class="muted">{{ _('logs_intro') }}</span></div>
+<div class="tabs">{% for l in ['', 'ERROR', 'WARNING', 'INFO', 'DEBUG'] %}<a href="/logs?level={{ l }}" {% if l == level %}aria-current="true"{% endif %}>{{ l or _('rep_kind_all') }}</a>{% endfor %}</div>
+{% include "_logs_table.html" %}
+{% endblock %}

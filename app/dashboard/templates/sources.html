@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, csrf_field %}
+{% block heading %}{{ _('nav_sources') }}{% endblock %}
+{% block content %}
+{% set can_edit = LEVELS[admin.role] >= 2 %}
+<div class="page-head"><h1>{{ _('nav_sources') }}</h1><span class="muted">{{ _('sources_intro') }}</span></div>
+<div class="table-wrap"><table>
+ <thead><tr><th>{{ _('col_source') }}</th><th>{{ _('col_status') }}</th><th>{{ _('src_enabled') }}</th><th>{{ _('src_priority') }}</th><th>{{ _('src_stats') }}</th><th>{{ _('src_last_error') }}</th><th></th></tr></thead>
+ <tbody>
+ {% for it in items %}{% set c = it.cfg %}<tr>
+  <td><strong>{{ it.name }}</strong><div class="small muted">{{ it.desc }}</div>{% if it.hint %}<div class="small err-text">{{ it.hint }}</div>{% endif %}</td>
+  <td>{% if not it.configured %}{{ status_badge('disabled', _) }}{% else %}{{ status_badge(c.last_status if c else 'unknown', _) }}{% endif %}{% if c and c.last_latency_ms %}<div class="small muted">{{ c.last_latency_ms }} ms</div>{% endif %}</td>
+  <td colspan="2">
+   <form method="post" action="/sources/{{ it.name }}/update" class="inline-form">{{ csrf_field(csrf) }}
+    <label style="display:inline-flex;gap:.3rem;align-items:center;margin:0"><input type="checkbox" name="enabled" value="1" {% if c and c.enabled %}checked{% endif %} {% if not can_edit %}disabled{% endif %}>{{ _('src_enabled') }}</label>
+    <input type="number" name="priority" min="1" max="999" value="{{ c.priority if c else 100 }}" style="width:5rem" aria-label="{{ _('src_priority') }}" {% if not can_edit %}disabled{% endif %}>
+    {% if can_edit %}<button class="btn sm">{{ _('save') }}</button>{% endif %}</form></td>
+  <td class="small">{% if c %}{{ c.total_requests }} {{ _('requests') }} · {{ c.total_errors }} {{ _('src_errors') }} · {{ c.total_hits }} PDF{% endif %}</td>
+  <td class="small mono">{{ (c.last_error or '')[:120] if c else '' }}</td>
+  <td class="nw">{% if can_edit %}<form method="post" action="/sources/{{ it.name }}/test" class="inline-form">{{ csrf_field(csrf) }}<button class="btn sm">{{ _('src_test') }}</button></form>{% endif %}</td>
+ </tr>{% endfor %}
+ </tbody></table></div>
+<section class="card" style="margin-top:1rem">
+ <h2>{{ _('api_keys') }}</h2><p class="muted small">{{ _('api_keys_help') }}</p>
+ <div class="grid g-2">
+ {% for env, (attr, label) in secret_fields.items() if env != 'BALE_BOT_TOKEN' %}
+  <form method="post" action="/sources/key" class="card" style="margin:0">{{ csrf_field(csrf) }}<input type="hidden" name="env_name" value="{{ env }}">
+   <label for="k-{{ env }}"><strong>{{ _(label) }}</strong> <span class="mono small">{{ env }}</span> {% for it in items if it.key_env == env %}{% if it.key_set %}<span class="badge b-ok">{{ _('secret_set') }}</span>{% else %}<span class="badge b-mute">{{ _('secret_unset') }}</span>{% endif %}{% endfor %}</label>
+   {% if admin.role == 'superadmin' %}<div class="inline-form" style="margin-top:.3rem;width:100%"><input id="k-{{ env }}" name="value" type="{{ 'email' if env == 'CONTACT_EMAIL' else 'password' }}" autocomplete="off" placeholder="{{ _('secret_new_value') }}" style="flex:1"><button class="btn sm primary">{{ _('save') }}</button></div>{% endif %}
+  </form>{% endfor %}
+ </div>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% from "_macros.html" import stat, status_badge %}
+<div id="cards" hx-get="/dashboard/cards" hx-trigger="every 10s" hx-swap="outerHTML">
+ <div class="grid g-cards" style="margin-bottom:.8rem">
+  <div class="stat lead"><div class="l">{{ _('stat_bot_status') }}</div>
+   <div class="v" style="font-size:1.15rem">{{ status_badge(st.bot.state, _) }} {% if st.bot.username %}<span class="mono small">@{{ st.bot.username }}</span>{% endif %}</div>
+   {% if st.bot.last_error and st.bot.state != 'running' %}<div class="small err-text">{{ st.bot.last_error }}</div>{% elif st.bot.state == 'disabled' %}<div class="small muted">{{ _('bot_disabled_hint') }}</div>{% endif %}
+   <div class="small muted">{{ _('stat_queue') }}: {{ st.queued }} · {{ _('stat_active_jobs') }}: {{ st.active }}</div></div>
+  {{ stat(_('stat_success_rate'), (st.success_rate ~ '%') if st.success_rate is not none else '—', 'lead') }}
+  {{ stat(_('stat_errors_24h'), st.errors_24h, 'lead') }}
+ </div>
+ <div class="grid g-cards">
+  {{ stat(_('stat_users_total'), st.users_total) }}
+  {{ stat(_('stat_users_active'), st.users_active) }}
+  {{ stat(_('stat_searches'), st.searches) }}
+  {{ stat(_('stat_articles_found'), st.articles_found) }}
+  {{ stat(_('stat_pdfs'), st.pdfs_downloaded) }}
+  {{ stat(_('stat_sent'), st.sent) }}
+  {{ stat(_('stat_saved'), st.saved) }}
+  {{ stat(_('stat_deleted'), st.deleted) }}
+  {{ stat(_('stat_stored_size'), st.stored_bytes | filesize) }}
+  <div class="stat"><div class="v">{{ st.disk_used | filesize }}</div><div class="l">{{ _('stat_disk') }} ({{ st.disk_total | filesize }})</div>
+   <div class="bar"><i style="width:{{ (100 * st.disk_used / st.disk_total) | round | int if st.disk_total else 0 }}%"></i></div></div>
+ </div>
+</div>

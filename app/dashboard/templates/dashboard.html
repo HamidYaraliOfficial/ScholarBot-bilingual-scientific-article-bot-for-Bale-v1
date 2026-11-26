@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block heading %}{{ _('nav_dashboard') }}{% endblock %}
+{% block content %}
+{% include "_cards.html" %}
+<section id="charts" class="grid g-2" style="margin-top:1rem" data-labels='{{ {"requests": _("chart_requests"), "received": _("chart_received"), "active": _("chart_active_users"), "sources": _("chart_sources"), "rate": _("chart_success_rate")} | tojson }}'>
+ <div class="card"><h3>{{ _('chart_requests_title') }}</h3><div class="chart-box"><canvas id="ch-requests"></canvas></div></div>
+ <div class="card"><h3>{{ _('chart_active_title') }}</h3><div class="chart-box"><canvas id="ch-active"></canvas></div></div>
+ <div class="card"><h3>{{ _('chart_sources_title') }}</h3><div class="chart-box"><canvas id="ch-sources"></canvas></div></div>
+ <div class="card"><h3>{{ _('chart_rate_title') }}</h3><div class="chart-box"><canvas id="ch-rate"></canvas></div></div>
+</section>
+<section class="card" style="margin-top:1rem">
+ <h2>{{ _('recent_errors') }}</h2>
+ {% if errors %}<div class="table-wrap"><table><thead><tr><th>{{ _('col_time') }}</th><th>{{ _('col_kind') }}</th><th>{{ _('col_source') }}</th><th>{{ _('col_message') }}</th></tr></thead><tbody>
+ {% for e in errors %}<tr><td class="nw"><time class="ts" datetime="{{ e.created_at | iso }}"></time></td><td><span class="badge b-err">{{ e.kind }}</span></td><td>{{ e.source }}</td><td class="mono">{{ e.message[:160] }}</td></tr>{% endfor %}
+ </tbody></table></div>{% else %}<p class="muted">{{ _('no_errors') }}</p>{% endif %}
+</section>
+{% endblock %}

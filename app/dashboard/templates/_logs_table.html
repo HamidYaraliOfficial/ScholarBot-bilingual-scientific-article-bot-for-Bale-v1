@@ -1,0 +1,5 @@
+<div id="logs-wrap" hx-get="/logs?partial=1&level={{ level }}" hx-trigger="every 5s" hx-swap="outerHTML">
+ <div class="card" style="padding:.5rem .8rem;max-height:70vh;overflow:auto">
+ {% for r in records %}<div class="log-line"><span class="muted">{{ r.ts }}</span> <span class="badge {{ 'b-err' if r.level in ('ERROR','CRITICAL') else 'b-warn' if r.level == 'WARNING' else 'b-mute' }}">{{ r.level }}</span> <span class="muted">{{ r.logger }}</span> {{ r.msg }}{% if r.exc %}<br>{{ r.exc }}{% endif %}</div>{% else %}<p class="muted">{{ _('no_logs') }}</p>{% endfor %}
+ </div>
+</div>

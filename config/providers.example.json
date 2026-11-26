@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to config/providers.json BEFORE the first start to seed source defaults. Afterwards use Dashboard > Scientific Sources. Lower priority number = preferred first. API keys never go here: put them in .env (CONTACT_EMAIL, OPENALEX_API_KEY, CORE_API_KEY).",
+  "crossref":   { "enabled": true, "priority": 10 },
+  "openalex":   { "enabled": true, "priority": 20 },
+  "unpaywall":  { "enabled": true, "priority": 30 },
+  "europe_pmc": { "enabled": true, "priority": 40 },
+  "doaj":       { "enabled": true, "priority": 50 },
+  "arxiv":      { "enabled": true, "priority": 60 },
+  "core":       { "enabled": true, "priority": 70 }
+}

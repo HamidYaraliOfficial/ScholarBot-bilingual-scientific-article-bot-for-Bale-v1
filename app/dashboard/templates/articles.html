@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block heading %}{{ _('nav_library' if library else 'nav_articles') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ _('nav_library' if library else 'nav_articles') }}</h1><span class="muted">{{ _('articles_intro_library' if library else 'articles_intro') }}</span></div>
+<form class="card filters" id="filters" action="{{ base_path }}" method="get" hx-get="/articles/table" hx-target="#articles-wrap" hx-swap="outerHTML" hx-trigger="submit, change from:select, input delay:450ms from:input" hx-push-url="false">
+ {% if library %}<input type="hidden" name="library" value="1">{% endif %}
+ <div><label for="f-q">{{ _('flt_title') }}</label><input id="f-q" name="q" value="{{ filters.q }}" style="width:100%"></div>
+ <div><label for="f-doi">DOI</label><input id="f-doi" name="doi" value="{{ filters.doi }}" class="mono" style="width:100%"></div>
+ <div><label for="f-author">{{ _('flt_author') }}</label><input id="f-author" name="author" value="{{ filters.author }}" style="width:100%"></div>
+ <div><label for="f-year">{{ _('flt_year') }}</label><input id="f-year" name="year" type="number" min="1500" max="2100" value="{{ filters.year or '' }}" style="width:100%"></div>
+ <div><label for="f-source">{{ _('col_source') }}</label><select id="f-source" name="source" style="width:100%"><option value="">—</option>{% for s in sources %}<option value="{{ s }}" {% if filters.source == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+ <div><label for="f-status">{{ _('col_status') }}</label><select id="f-status" name="status" style="width:100%"><option value="">—</option>{% for s in ['processing','received','sent','failed','deleted'] %}<option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ _('status_' ~ s) }}</option>{% endfor %}</select></div>
+ {% if not library %}<div><label for="f-saved">{{ _('col_saved') }}</label><select id="f-saved" name="saved" style="width:100%"><option value="">—</option><option value="saved" {% if filters.saved == 'saved' %}selected{% endif %}>{{ _('lib_saved') }}</option><option value="temporary" {% if filters.saved == 'temporary' %}selected{% endif %}>{{ _('lib_temporary') }}</option></select></div>{% endif %}
+ <div><label for="f-pp">{{ _('flt_per_page') }}</label><select id="f-pp" name="per_page" style="width:100%">{% for n in per_page_choices %}<option {% if n == view.per_page %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+</form>
+{% include "_articles_table.html" %}
+{% endblock %}
+{% block dialogs %}
+<dialog id="delete-dialog" aria-labelledby="dd-title">
+ <h2 id="dd-title">{{ _('delete_title') }}</h2>
+ <p id="dd-count" class="muted"></p>
+ <label style="display:flex;gap:.5rem;align-items:flex-start;color:var(--text)"><input type="radio" name="dmode" value="info" checked><span><strong>{{ _('delete_info_only') }}</strong><br><span class="muted small">{{ _('delete_info_only_help') }}</span></span></label>
+ <label style="display:flex;gap:.5rem;align-items:flex-start;color:var(--text);margin-top:.6rem"><input type="radio" name="dmode" value="info_and_file"><span><strong>{{ _('delete_info_file') }}</strong><br><span class="muted small">{{ _('delete_info_file_help') }}</span></span></label>
+ <div class="toolbar" style="justify-content:flex-end"><button class="btn" id="dd-cancel">{{ _('cancel') }}</button><button class="btn danger" id="dd-confirm">{{ _('delete') }}</button></div>
+</dialog>
+<dialog id="detail-dialog"><div id="detail-body"></div><div class="toolbar" style="justify-content:flex-end"><button class="btn" id="detail-close">{{ _('close') }}</button></div></dialog>
+{% endblock %}

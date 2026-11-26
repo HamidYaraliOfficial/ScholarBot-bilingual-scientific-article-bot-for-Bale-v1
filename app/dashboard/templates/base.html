@@ -1,0 +1,47 @@
+{% from "_macros.html" import icon %}
+<!doctype html>
+<html lang="{{ lang }}" dir="{{ dir }}" data-theme="{{ theme }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"historyCacheSize":0}'>
+<title>{% block title %}{{ _('app_name') }}{% endblock %} · ScholarBot</title>
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/vendor/htmx.min.js" defer></script>
+<script src="/static/vendor/chart.min.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body data-csrf="{{ csrf }}" data-lang="{{ lang }}" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'>
+<script type="application/json" id="i18n">{{ {'selected': _('js_selected'), 'select_all': _('js_select_all_filtered'), 'all_selected': _('js_all_selected'), 'delete_n': _('js_delete_n'), 'error': _('js_error'), 'none': _('err_nothing_selected')} | tojson }}</script>
+<div class="app" id="app">
+ <aside class="sidebar" aria-label="{{ _('nav_label') }}">
+  <div class="brand"><span class="brand-mark">S</span><span class="brand-text">ScholarBot</span></div>
+  <nav class="nav">
+   {% set nav_items = [('dashboard','/','nav_dashboard'),('articles','/articles','nav_articles'),('library','/library','nav_library'),('history','/history','nav_history'),('users','/users','nav_users'),('sources','/sources','nav_sources')] %}
+   {% if admin.role == 'superadmin' %}{% set nav_items = nav_items + [('admins','/admins','nav_admins')] %}{% endif %}
+   {% set nav_items = nav_items + [('reports','/reports','nav_reports'),('settings','/settings','nav_settings')] %}
+   {% if LEVELS[admin.role] >= 2 %}{% set nav_items = nav_items + [('logs','/logs','nav_logs')] %}{% endif %}
+   {% for key, href, label in nav_items %}<a href="{{ href }}" {% if nav == key %}aria-current="page"{% endif %} title="{{ _(label) }}">{{ icon(key) }}<span>{{ _(label) }}</span></a>{% endfor %}
+  </nav>
+ </aside>
+ <div class="main">
+  <header class="topbar">
+   <button class="btn icon menu-btn" id="menu-btn" aria-label="{{ _('nav_label') }}">☰</button>
+   <button class="btn icon collapse-btn" id="collapse-btn" aria-label="{{ _('nav_collapse') }}">☰</button>
+   <strong>{% block heading %}{% endblock %}</strong>
+   <span class="spacer"></span>
+   <form method="post" action="/prefs" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf }}">
+    {% for l in languages %}<button class="btn sm" name="lang" value="{{ l }}" {% if l == lang %}aria-current="true" disabled{% endif %}>{{ {'fa':'فارسی','en':'English'}.get(l, l) }}</button>{% endfor %}
+    <button class="btn sm" name="theme" value="{{ 'light' if theme == 'dark' else 'dark' }}" title="{{ _('theme_toggle') }}">{{ '☀' if theme == 'dark' else '☾' }}</button>
+   </form>
+   <form method="post" action="/logout" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <span class="muted small">{{ admin.username }} <span class="badge b-mute">{{ _('role_' ~ admin.role) }}</span></span>
+    <button class="btn sm">{{ _('logout') }}</button></form>
+  </header>
+  <main class="content">{% block content %}{% endblock %}</main>
+ </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite">{% for f in flash %}<div class="toast {{ f.kind }}" role="status">{{ f.msg }}</div>{% endfor %}</div>
+{% block dialogs %}{% endblock %}
+</body>
+</html>

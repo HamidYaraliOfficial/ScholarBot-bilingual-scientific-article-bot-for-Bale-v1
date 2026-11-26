@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat %}
+{% block heading %}{{ _('nav_reports') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ _('nav_reports') }}</h1><span class="muted">{{ _('reports_intro') }}</span><a class="btn sm" href="/reports/errors.csv" style="margin-inline-start:auto">{{ _('export_errors_csv') }}</a></div>
+<div class="grid g-cards">
+ {{ stat(_('rep_bot_errors'), by_kind.get('bot', 0)) }}{{ stat(_('rep_provider_errors'), by_kind.get('provider', 0)) }}{{ stat(_('rep_delivery_errors'), by_kind.get('delivery', 0)) }}{{ stat(_('rep_system_errors'), by_kind.get('system', 0)) }}
+</div>
+<div class="grid g-2" style="margin-top:1rem">
+ <section class="card"><h3>{{ _('rep_top_failures') }}</h3>
+  {% if failures %}<table><tbody>{% for code, n in failures %}<tr><td class="mono">{{ code }}</td><td>{{ n }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="muted">{{ _('no_errors') }}</p>{% endif %}</section>
+ <section class="card"><h3>{{ _('rep_provider_health') }}</h3>
+  <table><thead><tr><th>{{ _('col_source') }}</th><th>{{ _('src_stats') }}</th><th>{{ _('rep_error_rate') }}</th></tr></thead><tbody>
+  {% for p in providers %}<tr><td>{{ p.name }}</td><td class="small">{{ p.total_requests }} / {{ p.total_errors }} / {{ p.total_hits }} PDF</td><td>{{ ((100 * p.total_errors / p.total_requests) | round | int ~ '%') if p.total_requests else '—' }}</td></tr>{% endfor %}</tbody></table></section>
+</div>
+<div class="tabs" style="margin-top:1rem">{% for k in ['', 'bot', 'provider', 'delivery', 'system'] %}<a href="/reports?kind={{ k }}" {% if k == kind %}aria-current="true"{% endif %}>{{ _('rep_kind_' ~ (k or 'all')) }}</a>{% endfor %}</div>
+<div class="table-wrap"><table><thead><tr><th>{{ _('col_time') }}</th><th>{{ _('col_kind') }}</th><th>{{ _('col_source') }}</th><th>{{ _('col_message') }}</th></tr></thead><tbody>
+{% for e in events %}<tr><td class="nw small"><time class="ts" datetime="{{ e.created_at | iso }}"></time></td><td><span class="badge b-err">{{ e.kind }}</span></td><td>{{ e.source }}</td><td class="mono small">{{ e.message[:300] }}</td></tr>{% else %}<tr><td colspan="4" class="muted" style="text-align:center;padding:1.5rem">{{ _('no_errors') }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

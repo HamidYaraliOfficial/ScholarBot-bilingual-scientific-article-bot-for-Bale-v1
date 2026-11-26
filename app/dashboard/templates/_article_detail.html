@@ -1,0 +1,23 @@
+{% from "_macros.html" import status_badge %}
+<h2 style="margin-bottom:.2rem">{{ a.title or a.doi }}</h2>
+<p class="muted" style="margin-top:0">{{ (a.authors or []) | join(', ') }}</p>
+<dl class="kv">
+ <dt>{{ _('lbl_year') }}</dt><dd>{{ a.year or '—' }}</dd>
+ <dt>{{ _('lbl_journal') }}</dt><dd>{{ a.journal or '—' }}{% if a.volume %} · {{ a.volume }}{% endif %}{% if a.issue %}({{ a.issue }}){% endif %}{% if a.pages %} · {{ a.pages }}{% endif %}</dd>
+ <dt>{{ _('lbl_publisher') }}</dt><dd>{{ a.publisher or '—' }}{% if a.issn %} · ISSN {{ a.issn }}{% endif %}</dd>
+ <dt>DOI</dt><dd class="mono">{% if a.doi %}<a href="{{ a.doi_url }}" target="_blank" rel="noopener noreferrer">{{ a.doi }}</a>{% else %}—{% endif %}</dd>
+ <dt>{{ _('lbl_type') }}</dt><dd>{{ a.work_type or '—' }}</dd>
+ <dt>{{ _('lbl_access') }}</dt><dd>{{ _('access_' ~ a.access_status) }}{% if a.license %} · {{ a.license }}{% endif %}</dd>
+ <dt>{{ _('col_status') }}</dt><dd>{{ status_badge(a.status, _) }} {% if a.saved %}<span class="badge b-acc">{{ _('lib_saved') }}</span>{% elif a.file %}<span class="badge b-mute">{{ _('lib_temporary') }}</span>{% endif %}</dd>
+ <dt>{{ _('lbl_official_links') }}</dt><dd>{% if a.landing_url %}<a href="{{ a.landing_url }}" target="_blank" rel="noopener noreferrer">{{ _('publisher_page') }}</a>{% endif %}{% if a.pdf_url %} · <a href="{{ a.pdf_url }}" target="_blank" rel="noopener noreferrer">{{ _('source_pdf_link') }}</a>{% endif %}{% if not a.landing_url and not a.pdf_url %}—{% endif %}</dd>
+ <dt>{{ _('col_source') }}</dt><dd>{{ a.source or '—' }} <span class="muted small">({{ (a.metadata_sources or []) | join(', ') }})</span></dd>
+ {% if a.file %}<dt>{{ _('lbl_file') }}</dt><dd>{{ a.file.size_bytes | filesize }} · {{ a.file.page_count or '?' }} {{ _('pages') }} · {{ _('pdf_valid') if a.file.validation_status == 'valid' else a.file.validation_status }}<br><span class="mono small muted">SHA-256 {{ a.file.sha256 }}</span><br><a href="/articles/{{ a.id }}/file" target="_blank" rel="noopener">{{ _('act_view_pdf') }}</a> · <a href="/articles/{{ a.id }}/file?download=1">{{ _('act_download') }}</a></dd>{% endif %}
+ <dt>{{ _('col_date') }}</dt><dd><time class="ts" datetime="{{ a.created_at | iso }}"></time> · {{ a.request_count }} {{ _('requests') }}</dd>
+</dl>
+{% if a.abstract %}<h3 style="margin-top:1rem">{{ _('lbl_abstract') }}</h3><p class="small" style="max-height:9rem;overflow:auto">{{ a.abstract }}</p>{% endif %}
+{% if a.keywords %}<p class="small muted">{{ a.keywords | join(' · ') }}</p>{% endif %}
+<h3 style="margin-top:1rem">{{ _('op_history') }}</h3>
+<div class="table-wrap" style="max-height:14rem;overflow:auto"><table><thead><tr><th>{{ _('col_time') }}</th><th>{{ _('col_user') }}</th><th>{{ _('col_status') }}</th><th>{{ _('col_error') }}</th></tr></thead><tbody>
+{% for j in jobs %}<tr><td class="nw small"><time class="ts" datetime="{{ j.created_at | iso }}"></time></td><td class="small">{{ ('@' ~ j.user.username) if j.user and j.user.username else (j.user.bale_id if j.user else '—') }}</td><td>{{ status_badge(j.status, _) }}</td><td class="small mono">{{ j.error_code or '' }}</td></tr>{% else %}<tr><td colspan="4" class="muted">—</td></tr>{% endfor %}
+{% for d in deliveries %}<tr><td class="nw small"><time class="ts" datetime="{{ d.sent_at | iso }}"></time></td><td class="small" colspan="2">{{ _('delivery') }}</td><td>{{ status_badge('sent' if d.status == 'sent' else 'failed', _) }} <span class="small mono">{{ d.error or '' }}</span></td></tr>{% endfor %}
+</tbody></table></div>

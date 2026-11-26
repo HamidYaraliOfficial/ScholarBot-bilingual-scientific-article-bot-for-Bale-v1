@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, csrf_field %}
+{% block heading %}{{ _('nav_settings') }}{% endblock %}
+{% block content %}
+{% set sup = admin.role == 'superadmin' %}{% set can_edit = LEVELS[admin.role] >= 2 %}
+<div class="page-head"><h1>{{ _('nav_settings') }}</h1>{% if not sup %}<span class="muted">{{ _('settings_readonly') }}</span>{% endif %}</div>
+<section class="card"><h2>{{ _('set_bot') }}</h2>
+ <p>{{ status_badge(bot.state, _) }} {% if bot.username %}<span class="mono">@{{ bot.username }}</span>{% endif %} {% if bot.last_error %}<span class="small err-text">{{ bot.last_error }}</span>{% endif %}</p>
+ <p class="small muted">{{ _('set_api_base') }}: <span class="mono">{{ api_base }}</span></p>
+ {% for s in secrets if s.env == 'BALE_BOT_TOKEN' %}
+ <form method="post" action="/sources/key" class="form-row">{{ csrf_field(csrf) }}<input type="hidden" name="env_name" value="BALE_BOT_TOKEN">
+  <div><label for="tok">{{ _(s.label) }} {% if s.is_set %}<span class="badge b-ok">{{ _('secret_set') }}</span>{% else %}<span class="badge b-mute">{{ _('secret_unset') }}</span>{% endif %}</label>
+   {% if sup %}<input id="tok" name="value" type="password" autocomplete="off" placeholder="{{ _('secret_new_value') }}" style="width:100%"><div class="help">{{ _('token_help') }}</div>{% endif %}</div>
+  {% if sup %}<div style="align-self:end"><button class="btn primary">{{ _('save_and_restart_bot') }}</button></div>{% endif %}
+ </form>{% endfor %}
+</section>
+
+<form method="post" action="/settings" class="card" style="margin-top:1rem"><h2>{{ _('set_general') }}</h2>{{ csrf_field(csrf) }}
+ {% set groups = [('set_group_general', ['default_language','admin_bale_id','log_level']), ('set_group_limits', ['max_pdf_mb','user_daily_quota','user_rate_per_minute','concurrency']), ('set_group_retention', ['temp_retention_hours','cleanup_interval_minutes','backup_interval_hours']), ('set_group_sources', ['provider_timeout_seconds','provider_retries','search_results_limit','require_explicit_license'])] %}
+ {% for gk, keys in groups %}<h3 style="margin-top:1rem">{{ _(gk) }}</h3><div class="form-row">
+  {% for k in keys %}{% set d = defs[k] %}<div>
+   {% if d.type == 'bool' %}<label style="display:flex;gap:.5rem;align-items:center;color:var(--text)"><input type="checkbox" name="{{ k }}" {% if values[k] %}checked{% endif %} {% if not sup %}disabled{% endif %}>{{ _('set_' ~ k) }}</label>
+   {% else %}<label for="s-{{ k }}">{{ _('set_' ~ k) }}</label>
+    {% if d.type == 'choice' %}<select id="s-{{ k }}" name="{{ k }}" style="width:100%" {% if not sup %}disabled{% endif %}>{% for c in d.choices %}<option value="{{ c }}" {% if values[k] == c %}selected{% endif %}>{{ {'fa':'فارسی','en':'English'}.get(c, c) }}</option>{% endfor %}</select>
+    {% elif d.type == 'int' %}<input id="s-{{ k }}" name="{{ k }}" type="number" min="{{ d.min }}" max="{{ d.max }}" value="{{ values[k] }}" style="width:100%" {% if not sup %}disabled{% endif %}>
+    {% else %}<input id="s-{{ k }}" name="{{ k }}" value="{{ values[k] }}" style="width:100%" autocomplete="off" {% if not sup %}disabled{% endif %}>{% endif %}{% endif %}
+   <div class="help">{{ _('set_' ~ k ~ '_help') }}</div></div>{% endfor %}</div>{% endfor %}
+ {% if sup %}<div class="toolbar"><button class="btn primary">{{ _('save') }}</button></div>{% endif %}
+</form>
+
+<section class="card" style="margin-top:1rem"><h2>{{ _('set_storage') }}</h2>
+ <dl class="kv"><dt>{{ _('set_db') }}</dt><dd class="mono">{{ db_kind }}</dd><dt>{{ _('set_storage_path') }}</dt><dd class="mono">{{ storage_dir }}</dd>
+  <dt>{{ _('stat_stored_size') }}</dt><dd>{{ usage.library_files }} {{ _('lib_saved') }} ({{ usage.library_bytes | filesize }}) · {{ usage.temp_files }} {{ _('lib_temporary') }} ({{ usage.temp_bytes | filesize }})</dd>
+  <dt>{{ _('stat_disk') }}</dt><dd>{{ usage.disk_used | filesize }} / {{ usage.disk_total | filesize }} ({{ _('disk_free') }} {{ usage.disk_free | filesize }})</dd></dl>
+ <p class="help">{{ _('env_paths_help') }}</p>
+ {% if can_edit %}<form method="post" action="/settings/cleanup">{{ csrf_field(csrf) }}<button class="btn">{{ _('cleanup_now') }}</button>{% if last_cleanup %} <span class="muted small">{{ _('last_cleanup') }}: {{ last_cleanup.temp_files_removed }}</span>{% endif %}</form>{% endif %}
+</section>
+
+<section class="card" style="margin-top:1rem" id="backups"><h2>{{ _('set_backup') }}</h2><p class="muted small">{{ _('backup_help') }}</p>
+ {% if can_edit %}<form method="post" action="/backups/create">{{ csrf_field(csrf) }}<button class="btn primary">{{ _('backup_create') }}</button></form>{% endif %}
+ <div class="table-wrap" style="margin-top:.8rem"><table><thead><tr><th>{{ _('col_file') }}</th><th>{{ _('col_size') }}</th><th>{{ _('col_date') }}</th><th></th></tr></thead><tbody>
+ {% for b in backups %}<tr><td class="mono small">{{ b.name }}</td><td class="nw">{{ b.size | filesize }}</td><td class="nw small"><time class="ts" datetime="{{ b.created | iso }}"></time></td>
+  <td class="nw">{% if can_edit %}<a class="btn sm" href="/backups/{{ b.name }}">{{ _('act_download') }}</a>{% endif %}
+  {% if sup %}<form method="post" action="/backups/restore" class="inline-form" data-confirm="{{ _('confirm_restore') }}">{{ csrf_field(csrf) }}<input type="hidden" name="name" value="{{ b.name }}"><input type="hidden" name="confirm" value="yes"><button class="btn sm danger">{{ _('backup_restore') }}</button></form>{% endif %}</td></tr>
+ {% else %}<tr><td colspan="4" class="muted">{{ _('no_backups') }}</td></tr>{% endfor %}</tbody></table></div>
+ {% if sup %}<form method="post" action="/backups/restore" enctype="multipart/form-data" class="inline-form" style="margin-top:.8rem;flex-wrap:wrap" data-confirm="{{ _('confirm_restore') }}">{{ csrf_field(csrf) }}<input type="hidden" name="confirm" value="yes"><input type="file" name="upload" accept=".zip" required><button class="btn danger">{{ _('backup_restore_upload') }}</button></form>{% endif %}
+</section>
+{% endblock %}

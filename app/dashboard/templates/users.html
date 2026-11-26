@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, pager, csrf_field %}
+{% block heading %}{{ _('nav_users') }}{% endblock %}
+{% block content %}
+{% set can_edit = LEVELS[admin.role] >= 2 %}
+<div class="page-head"><h1>{{ _('nav_users') }}</h1><span class="muted">{{ total }} {{ _('users_count') }} · {{ _('default_quota') }}: {{ default_quota }}</span></div>
+<form class="card filters" method="get" action="/users"><div><label for="u-q">{{ _('flt_user') }}</label><input id="u-q" name="q" value="{{ q }}" style="width:100%"></div><div><button class="btn primary">{{ _('filter') }}</button></div></form>
+<div class="table-wrap"><table>
+ <thead><tr><th>{{ _('col_user') }}</th><th>{{ _('col_bale_id') }}</th><th>{{ _('col_language') }}</th><th>{{ _('col_joined') }}</th><th>{{ _('col_last_seen') }}</th><th>{{ _('requests') }}</th><th>{{ _('col_quota') }}</th><th>{{ _('col_status') }}</th><th>{{ _('col_actions') }}</th></tr></thead>
+ <tbody>
+ {% for u, n in rows %}<tr>
+  <td>{{ u.first_name or '' }} {% if u.username %}<span class="mono small muted">@{{ u.username }}</span>{% endif %}</td>
+  <td class="mono">{{ u.bale_id }}</td><td>{{ u.language or '—' }}</td>
+  <td class="nw small"><time class="ts" datetime="{{ u.created_at | iso }}"></time></td>
+  <td class="nw small"><time class="ts" datetime="{{ u.last_seen_at | iso }}"></time>{% if (now - u.last_seen_at).days < 7 %} <span class="badge b-ok">{{ _('user_active') }}</span>{% else %} <span class="badge b-mute">{{ _('user_inactive') }}</span>{% endif %}</td>
+  <td>{{ n }}</td>
+  <td>{% if can_edit %}<form method="post" action="/users/{{ u.id }}/quota" class="inline-form">{{ csrf_field(csrf) }}<input name="quota" value="{{ u.quota_daily if u.quota_daily is not none else '' }}" placeholder="{{ default_quota }}" inputmode="numeric" style="width:5rem"><button class="btn sm">{{ _('save') }}</button></form>{% else %}{{ u.quota_daily if u.quota_daily is not none else default_quota }}{% endif %}</td>
+  <td>{{ status_badge('blocked' if u.is_blocked else 'active', _) }}</td>
+  <td class="nw"><button class="btn sm" data-detail="u{{ u.id }}" hx-get="/users/{{ u.id }}" hx-target="#detail-body">{{ _('act_history') }}</button>
+   {% if can_edit %}<form method="post" action="/users/{{ u.id }}/block" class="inline-form" data-confirm="{{ _('confirm_block') if not u.is_blocked else _('confirm_unblock') }}">{{ csrf_field(csrf) }}<input type="hidden" name="block" value="{{ 0 if u.is_blocked else 1 }}"><button class="btn sm {{ '' if u.is_blocked else 'danger' }}">{{ _('act_unblock') if u.is_blocked else _('act_block') }}</button></form>{% endif %}</td>
+ </tr>{% else %}<tr><td colspan="9" class="muted" style="text-align:center;padding:2rem">{{ _('empty_users') }}</td></tr>{% endfor %}
+ </tbody></table></div>
+{% if pages > 1 %}<nav class="pager">{% if page > 1 %}<a class="btn sm" href="/users?q={{ q | urlencode }}&page={{ page - 1 }}">‹</a>{% endif %}<span class="muted">{{ page }} / {{ pages }}</span>{% if page < pages %}<a class="btn sm" href="/users?q={{ q | urlencode }}&page={{ page + 1 }}">›</a>{% endif %}</nav>{% endif %}
+{% endblock %}
+{% block dialogs %}<dialog id="detail-dialog"><div id="detail-body"></div><div class="toolbar" style="justify-content:flex-end"><button class="btn" id="detail-close">{{ _('close') }}</button></div></dialog>{% endblock %}

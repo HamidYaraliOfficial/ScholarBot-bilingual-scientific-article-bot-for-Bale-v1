@@ -1,0 +1,53 @@
+{% from "_macros.html" import status_badge, pager %}
+{% set can_edit = LEVELS[admin.role] >= 2 %}
+<div id="articles-wrap" data-total="{{ total }}" data-filter="{{ filter_query }}" data-library="{{ 1 if library else 0 }}">
+ <div class="toolbar" role="toolbar" aria-label="{{ _('bulk_actions') }}">
+  <strong class="muted" id="sel-count"></strong>
+  {% if can_edit %}
+  {% if not library %}<button class="btn sm primary" data-bulk="save">{{ _('act_save_selected') }}</button>{% endif %}
+  {% if library %}<button class="btn sm" data-bulk="unsave">{{ _('act_unsave_selected') }}</button>{% endif %}
+  <button class="btn sm danger" data-bulk="delete">{{ _('act_delete_selected') }}</button>{% endif %}
+  <button class="btn sm" data-bulk="zip">{{ _('act_zip') }}</button>
+  <span class="spacer"></span>
+  <span class="muted small">{{ _('act_export') }}:</span>
+  <button class="btn sm" data-export="xlsx">Excel</button><button class="btn sm" data-export="csv">CSV</button><button class="btn sm" data-export="bibtex">BibTeX</button><button class="btn sm" data-export="ris">RIS</button>
+ </div>
+ <div class="banner" id="sel-banner" hidden></div>
+ <div class="table-wrap"><table>
+  <thead><tr>
+   <th style="width:2rem"><input type="checkbox" id="sel-page" aria-label="{{ _('select_page') }}"></th>
+   {% macro sh(key, label) %}<th><a href="#" hx-get="/articles/table?{{ qs(sort=key, dir=('asc' if view.sort == key and view.desc else 'desc'), page=1) }}{% if library %}&library=1{% endif %}" hx-target="#articles-wrap" hx-swap="outerHTML">{{ label }}{% if view.sort == key %} {{ '▼' if view.desc else '▲' }}{% endif %}</a></th>{% endmacro %}
+   {{ sh('title', _('col_title')) }}<th>{{ _('col_authors') }}</th>{{ sh('year', _('col_year')) }}{{ sh('doi', 'DOI') }}<th>{{ _('col_user') }}</th><th>{{ _('col_source') }}</th>{{ sh('status', _('col_status')) }}{{ sh('size', _('col_size')) }}{{ sh('created_at', _('col_date')) }}<th>{{ _('col_saved') }}</th><th>{{ _('col_actions') }}</th>
+  </tr></thead>
+  <tbody>
+  {% for a in items %}
+   <tr data-id="{{ a.id }}">
+    <td><input type="checkbox" class="row-sel" value="{{ a.id }}" aria-label="{{ _('select_row') }}"></td>
+    <td class="title"><a href="#" class="clip" data-detail="{{ a.id }}" hx-get="/articles/{{ a.id }}" hx-target="#detail-body" hx-swap="innerHTML">{{ a.title or a.doi or '—' }}</a>{% if a.journal %}<div class="small muted clip">{{ a.journal }}</div>{% endif %}</td>
+    <td class="small"><span class="clip">{{ (a.authors or [])[:3] | join(', ') }}{% if (a.authors or []) | length > 3 %} …{% endif %}</span></td>
+    <td class="nw">{{ a.year or '' }}</td>
+    <td class="mono">{% if a.doi %}<a href="{{ a.doi_url }}" target="_blank" rel="noopener noreferrer">{{ a.doi }}</a>{% endif %}</td>
+    <td class="nw small">{% if a.last_user %}{{ ('@' ~ a.last_user.username) if a.last_user.username else a.last_user.bale_id }}{% endif %}</td>
+    <td class="nw">{{ a.source or '—' }}</td>
+    <td class="nw">{{ status_badge(a.status, _) }}{% if a.file and not a.saved and a.status != 'deleted' %} <span class="badge b-mute">{{ _('lib_temporary') }}</span>{% endif %}</td>
+    <td class="nw">{{ a.file.size_bytes | filesize if a.file else '—' }}</td>
+    <td class="nw small"><time class="ts" datetime="{{ a.created_at | iso }}"></time></td>
+    <td>{% if a.saved %}<span class="badge b-acc">{{ _('lib_saved') }}</span>{% else %}—{% endif %}</td>
+    <td class="nw">
+     <button class="btn sm" data-detail="{{ a.id }}" hx-get="/articles/{{ a.id }}" hx-target="#detail-body" hx-swap="innerHTML">{{ _('act_view') }}</button>
+     {% if a.file %}<a class="btn sm" href="/articles/{{ a.id }}/file?download=1">PDF</a>{% endif %}
+     {% if can_edit %}<button class="btn sm danger" data-delete-id="{{ a.id }}">{{ _('delete') }}</button>{% endif %}
+    </td>
+   </tr>
+  {% else %}
+   <tr><td colspan="12" class="muted" style="text-align:center;padding:2rem">{{ _('empty_articles') }}</td></tr>
+  {% endfor %}
+  </tbody>
+ </table></div>
+ <div class="pager">
+  <span class="muted small">{{ total }} {{ _('results') }}</span>
+  {% if page > 1 %}<a class="btn sm" href="#" hx-get="/articles/table?{{ qs(page=page-1) }}{% if library %}&library=1{% endif %}" hx-target="#articles-wrap" hx-swap="outerHTML">‹</a>{% endif %}
+  <span class="muted">{{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a class="btn sm" href="#" hx-get="/articles/table?{{ qs(page=page+1) }}{% if library %}&library=1{% endif %}" hx-target="#articles-wrap" hx-swap="outerHTML">›</a>{% endif %}
+ </div>
+</div>
