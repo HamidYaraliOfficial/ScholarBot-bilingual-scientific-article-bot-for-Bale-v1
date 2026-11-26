@@ -1,0 +1,2 @@
+{ "name": "scholarbot-ui-tests", "private": true, "description": "Optional jsdom checks for dashboard/static/app.js (run: npm install && pytest tests/test_js_ui.py)",
+  "devDependencies": { "jsdom": "^26.0.0" } }
